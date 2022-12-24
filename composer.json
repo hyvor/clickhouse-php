@@ -1,0 +1,30 @@
+{
+    "name": "hyvor/clickhouse-php",
+    "description": "ClickhouseDB Client for PHP",
+    "type": "library",
+    "license": "MIT",
+    "autoload": {
+        "psr-4": {
+            "Hyvor\\Clickhouse\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "Supun",
+            "email": "supun@hyvor.com"
+        }
+    ],
+    "require-dev": {
+        "pestphp/pest": "^1.22",
+        "phpstan/phpstan": "^1.9"
+    },
+    "config": {
+        "allow-plugins": {
+            "pestphp/pest-plugin": true
+        }
+    },
+    "require": {
+        "php": ">=8.1",
+        "guzzlehttp/guzzle": "^7.5"
+    }
+}
