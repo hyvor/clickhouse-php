@@ -8,12 +8,8 @@ on:
 
 jobs:
   tests:
-    name: "Tests on PHP ${{ matrix.php }}${{ matrix.name_suffix }}"
+    name: "Tests"
     runs-on: ubuntu-latest
-
-    strategy:
-      matrix:
-        php: [ '8.0', '8.1' ]
 
     steps:
       -   name: Checkout
@@ -23,7 +19,7 @@ jobs:
           uses: shivammathur/setup-php@v2
           with:
             coverage: "none"
-            php-version: "${{ matrix.php }}"
+            php-version: "8.1"
             ini-file: development
             tools: composer:v2
 

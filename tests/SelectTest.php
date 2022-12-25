@@ -42,4 +42,8 @@ it('connection', function () {
         expect($row['id'])->toBeInt();
     }
 
+    $count = $clickhouse->select('SELECT COUNT(*) FROM users');
+
+    expect($count->value())->toBe('7');
+
 });
