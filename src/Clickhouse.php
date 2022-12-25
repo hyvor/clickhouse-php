@@ -56,7 +56,7 @@ class Clickhouse
 
     }
 
-    public function pingThrow()
+    public function pingThrow() : void
     {
 
         if (!$this->ping())
@@ -64,6 +64,11 @@ class Clickhouse
 
     }
 
+    /**
+     * @param array<string, string> $columns
+     * @param array<mixed> ...$rows
+     * @throws ClickhouseHttpQueryException
+     */
     public function insert(string $table, array $columns, array ...$rows) : mixed
     {
 
@@ -96,9 +101,17 @@ class Clickhouse
 
     }
 
+    /**
+     * @param array<string, mixed> $bindings
+     */
     public function select(string $query, array $bindings = []) : ResultSet
     {
         $response = $this->query($query, $bindings);
+
+        if (!is_array($response)) {
+            throw new ClickhouseHttpQueryException('Invalid query response. Expected array, got ' . gettype($response));
+        }
+
         return new ResultSet($response);
     }
 
@@ -126,15 +139,20 @@ class Clickhouse
 
         try {
 
+            $headers = [
+                'X-ClickHouse-Format' => 'JSONCompact',
+                'X-ClickHouse-User' => $this->user,
+                'X-ClickHouse-Key' => $this->password,
+            ];
+
+            if ($this->database) {
+                $headers['X-ClickHouse-Database'] = $this->database;
+            }
+
             $request = new Request(
                 'POST',
                 $url,
-                [
-                    'X-ClickHouse-Format' => 'JSONCompact',
-                    'X-ClickHouse-User' => $this->user,
-                    'X-ClickHouse-Key' => $this->password,
-                    'X-ClickHouse-Database' => $this->database,
-                ],
+                $headers,
                 new MultipartStream([
                     [
                         'name' => 'query',

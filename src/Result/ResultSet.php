@@ -6,6 +6,9 @@ use ArrayIterator;
 use IteratorAggregate;
 use Traversable;
 
+/**
+ * @implements IteratorAggregate<int, mixed>
+ */
 class ResultSet implements IteratorAggregate
 {
 
@@ -30,9 +33,13 @@ class ResultSet implements IteratorAggregate
     public function __construct(array $json)
     {
 
+        /** @var array<string, array<mixed>> $columns */
         $columns = $json['meta'];
 
-        foreach ($json['data'] as $rowJson) {
+        /** @var array<array<mixed>> $data */
+        $data = $json['data'];
+
+        foreach ($data as $rowJson) {
             $row = [];
             foreach ($rowJson as $key => $value) {
                 $row[$columns[$key]['name']] = $value;
@@ -40,7 +47,9 @@ class ResultSet implements IteratorAggregate
             $this->result[] = $row;
         }
 
-        $this->rows = $json['rows'];
+        /** @var int $rowsCount */
+        $rowsCount = $json['rows'];
+        $this->rows = $rowsCount;
         $this->rowsBeforeLimitAtLeast = $json['rows_before_limit_at_least'] ?? null;
 
         $this->elapsedTimeSeconds = $json['statistics']['elapsed'] ?? null;
@@ -62,7 +71,13 @@ class ResultSet implements IteratorAggregate
      */
     public function first() : ?array
     {
-        return $this->result[0] ?? null;
+        if ($this->rows === 0)
+            return null;
+
+        /** @var array<mixed> $row */
+        $row = $this->result[0];
+
+        return $row;
     }
 
     public function value() : mixed
@@ -76,8 +91,11 @@ class ResultSet implements IteratorAggregate
         return array_values($row)[0];
     }
 
+    /**
+     * @return ArrayIterator<int, mixed>
+     */
     public function getIterator() : ArrayIterator
     {
-        return new ArrayIterator($this->rows);
+        return new ArrayIterator($this->result);
     }
 }
