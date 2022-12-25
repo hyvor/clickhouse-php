@@ -1,0 +1,13 @@
+version: '3.3'
+services:
+  clickhouse:
+    image: clickhouse/clickhouse-server:22.12
+    restart: always
+    ports:
+      - '8123:8123'
+      - '9000:9000'
+    volumes:
+      - clickhouse:/var/lib/clickhouse
+
+volumes:
+  clickhouse:
