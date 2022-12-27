@@ -172,9 +172,13 @@ class Clickhouse
             );
         }
 
-        $json = $response->getBody()->getContents();
+        $body = $response->getBody()->getContents();
 
-        return json_decode($json, true);
+        if ($response->getStatusCode() !== 200) {
+            throw new ClickhouseHttpQueryException($body, $response->getStatusCode());
+        }
+
+        return json_decode($body, true);
 
     }
 

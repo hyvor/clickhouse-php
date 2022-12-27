@@ -15,7 +15,7 @@ class ResultSet implements IteratorAggregate
     /**
      * @var array<mixed>
      */
-    private array $result;
+    private array $result = [];
 
     public int $rows;
 
