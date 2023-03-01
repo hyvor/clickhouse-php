@@ -17,19 +17,20 @@ it('connection', function () {
             'name' => 'String',
             'age' => 'UInt8',
         ],
-        [1, '2021-01-01 00:00:00', 'John', 30,],
-        [2, '2021-01-01 00:00:00', 'Jane', 25,],
-        [3, '2021-01-01 00:00:00', 'Jack', 20,],
-        [4, '2021-01-01 00:00:00', 'Jill', 15,],
-        [5, '2021-01-01 00:00:00', 'Jenny', 10,],
-        [6, '2021-01-01 00:00:00', 'Jen', 5,],
-        [7, '2021-01-01 00:00:00', 'Jen', 5,],
+        ['id' => 1, 'created_at' => '2021-01-01 00:00:00', 'name' => 'John', 'age' => 30],
+        ['id' => 2, 'created_at' => '2021-01-01 00:00:00', 'name' => 'Jane', 'age' => 25],
+        ['id' => 3, 'created_at' => '2021-01-01 00:00:00', 'name' => 'Jack', 'age' => 20],
+        ['id' => 4, 'created_at' => '2021-01-01 00:00:00', 'name' => 'Jill', 'age' => 15],
+        ['id' => 5, 'created_at' => '2021-01-01 00:00:00', 'name' => 'Jenny', 'age' => 10],
+        ['id' => 6, 'created_at' => '2021-01-01 00:00:00', 'name' => 'Jen', 'age' => 5],
+        ['id' => 7, 'created_at' => '2021-01-01 00:00:00', 'name' => 'Jen', 'age' => 5],
     );
 
     /** @var ResultSet $results */
     $results = $clickhouse->select('SELECT * FROM users LIMIT 6');
 
     expect($results->rows)->toBe(6)
+        ->and($results->count())->toBe(6)
         ->and($results->rowsBeforeLimitAtLeast)->toBe(7)
         ->and($results->elapsedTimeSeconds)->toBeGreaterThan(0)
         ->and($results->rowsRead)->toBe(7)

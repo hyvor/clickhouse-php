@@ -1,6 +1,5 @@
-> Cautions! This library is still in **BETA**. It is not recommended to use it in production.
 
-This library is a minimal wrapper around the [Clickhouse HTTP Interface](https://clickhouse.com/docs/en/interfaces/http) for PHP. It supports sessions, safe select and inserts, and queries with parameters.
+This is a minimal wrapper around the [Clickhouse HTTP Interface](https://clickhouse.com/docs/en/interfaces/http) for PHP. It supports sessions, select and inserts, and queries with parameters.
 
 ## Installation
 
@@ -47,6 +46,13 @@ $results->value(); // 2
 foreach ($results as $row) {
     // $row is an array
 }
+
+// properties
+$results->rows; // int (same as $results->count())
+$results->rowsBeforeLimitAtLeast; // null | int
+$results->elapsedTimeSeconds; // float
+$results->rowsRead; // int
+$results->bytesRead; // int
 ```
 
 
@@ -70,7 +76,11 @@ $clickhouse->insert(
         'name' => 'String',
         'age' => 'UInt8',
     ],
-    [1, 'John', 42]
+    [
+        'id' => 1, 
+        'name' => 'John', 
+        'age' => 42
+    ]
 )
 ```
 
@@ -82,7 +92,7 @@ INSERT INTO users (id, name, age) VALUES ({id: Int64}, {name: String}, {age: Int
 
 ### Insert multiple rows
 
-To insert multiple rows, pass an array of rows:
+To insert multiple rows, pass multiple arguments (arrays) at the end:
 
 ```php
 $clickhouse->insert(
@@ -92,9 +102,9 @@ $clickhouse->insert(
         'name' => 'String',
         'age' => 'UInt8',
     ],
-    [1, 'John', 42],
-    [2, 'Jane', 37],
-    [3, 'Bob', 21],
+    ['id' => 1, 'name' => 'John', 'age' => 42],
+    ['id' => 2, 'name' => 'Jane', 'age' => 37],
+    ['id' => 3, 'name' => 'Bob', 'age' => 21],
 )
 ```
 

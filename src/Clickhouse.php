@@ -7,6 +7,7 @@ use GuzzleHttp\Client as HttpClient;
 use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\Psr7\MultipartStream;
 use GuzzleHttp\Psr7\Request;
+use Hyvor\Clickhouse\Exception\ClickhouseException;
 use Hyvor\Clickhouse\Exception\ClickhouseHttpQueryException;
 use Hyvor\Clickhouse\Exception\ClickhousePingException;
 use Hyvor\Clickhouse\Result\ResultSet;
@@ -66,7 +67,7 @@ class Clickhouse
 
     /**
      * @param array<string, string> $columns
-     * @param array<mixed> ...$rows
+     * @param array<string, mixed> ...$rows
      * @throws ClickhouseHttpQueryException
      */
     public function insert(string $table, array $columns, array ...$rows) : mixed
@@ -80,12 +81,19 @@ class Clickhouse
 
             $rowPlaceholder = [];
 
-            foreach ($row as $index => $value) {
+            if (count($row) !== count($columns)) {
+                throw new ClickhouseException(
+                    'Invalid row. Expected ' .
+                    count($columns) . ' columns, got ' .
+                    count($row) .
+                    ' columns.'
+                );
+            }
 
-                $key = 'r' . $i . '_' . array_keys($columns)[$index];
+            foreach ($row as $columnName => $value) {
+                $key = 'r' . $i . '_' . $columnName;
                 $bindings[$key] = $value;
-
-                $rowPlaceholder[] = '{' . $key . ':' . $columns[array_keys($columns)[$index]] . '}';
+                $rowPlaceholder[] = '{' . $key . ':' . $columns[$columnName] . '}';
             }
 
             $rowPlaceholder = '(' . implode(',', $rowPlaceholder) . ')';

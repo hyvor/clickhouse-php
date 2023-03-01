@@ -1,5 +1,7 @@
 <?php
 
+use Hyvor\Clickhouse\Exception\ClickhouseException;
+
 it('inserts a row', function() {
 
     addUsersTable();
@@ -14,10 +16,10 @@ it('inserts a row', function() {
             'age' => 'UInt8',
         ],
         [
-            1,
-            '2021-01-01 00:00:00',
-            'John',
-            30,
+            'id' => 1,
+            'created_at' => '2021-01-01 00:00:00',
+            'name' => 'John',
+            'age' => 30,
         ]
     );
 
@@ -52,16 +54,16 @@ it('inserts multiple', function() {
             'age' => 'UInt8',
         ],
         [
-            1,
-            '2021-01-01 00:00:00',
-            'John',
-            30,
+            'id' => 1,
+            'created_at' => '2021-01-01 00:00:00',
+            'name' => 'John',
+            'age' => 30,
         ],
         [
-            2,
-            '2021-01-01 00:00:00',
-            'Jane',
-            25,
+            'id' => 2,
+            'created_at' => '2021-01-01 00:00:00',
+            'name' => 'Jane',
+            'age' => 25,
         ]
     );
 
@@ -69,3 +71,25 @@ it('inserts multiple', function() {
     expect($response['data'])->toHaveCount(2);
 
 });
+
+it('checks column count', function() {
+
+    addUsersTable();
+
+    $clickhouse = test()->clickhouse;
+
+    $response = $clickhouse->insert('users',
+        [
+            'id' => 'UInt32',
+            'created_at' => 'DateTime',
+            'name' => 'String',
+            'age' => 'UInt8',
+        ],
+        [
+            'id' => 1,
+            'created_at' => '2021-01-01 00:00:00',
+            'name' => 'John',
+        ]
+    );
+
+})->throws(ClickhouseException::class, 'Expected 4 columns, got 3');

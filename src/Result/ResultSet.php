@@ -66,6 +66,11 @@ class ResultSet implements IteratorAggregate
         return $this->result;
     }
 
+    public function count() : int
+    {
+        return $this->rows;
+    }
+
     /**
      * @return array<mixed> | null
      */
