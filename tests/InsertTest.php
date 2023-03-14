@@ -93,3 +93,33 @@ it('checks column count', function() {
     );
 
 })->throws(ClickhouseException::class, 'Expected 4 columns, got 3');
+
+# bug
+it('inserts correctly when the row key order is different', function() {
+
+    addUsersTable();
+
+    $clickhouse = test()->clickhouse;
+
+    $clickhouse->insert('users',
+        [
+            'id' => 'UInt32',
+            'created_at' => 'DateTime',
+            'name' => 'String',
+            'age' => 'UInt8',
+        ],
+        [
+            'age' => 10,
+            'created_at' => '2021-01-01 00:00:00',
+            'name' => 'John',
+            'id' => 1
+        ]
+    );
+
+    $response = $clickhouse->select('SELECT * FROM users');
+    $row = $response->first();
+
+    expect($row['id'])->toBe(1)
+        ->and($row['age'])->toBe(10);
+
+});

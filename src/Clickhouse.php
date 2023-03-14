@@ -73,7 +73,9 @@ class Clickhouse
     public function insert(string $table, array $columns, array ...$rows) : mixed
     {
 
-        $columnNames = implode(', ', array_keys($columns));
+        $columnNames = array_keys($columns);
+        sort($columnNames);
+        $columnNames = implode(',', $columnNames);
 
         $bindings = [];
         $placeholders = [];
@@ -89,6 +91,8 @@ class Clickhouse
                     ' columns.'
                 );
             }
+
+            ksort($row);
 
             foreach ($row as $columnName => $value) {
                 $key = 'r' . $i . '_' . $columnName;
