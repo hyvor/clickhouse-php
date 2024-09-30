@@ -114,6 +114,45 @@ class Clickhouse
     }
 
     /**
+     * @param string[] $columns
+     * @param array<array<mixed>> $rows
+     * @throws ClickhouseHttpQueryException
+     */
+    public function insertRaw(
+        string $table,
+        array $columns,
+        array $rows,
+        bool $asyncInsert = true,
+        bool $waitForAsyncInsert = true
+    ) : mixed
+    {
+
+        $asyncInsert = $asyncInsert ? 1 : 0;
+        $waitForAsyncInsert = $waitForAsyncInsert ? 1 : 0;
+
+        $columns = implode(',', $columns);
+
+        $values = [];
+        foreach ($rows as $row) {
+
+            foreach ($row as $key => $value) {
+                if (is_string($value)) {
+                    $row[$key] = "'$value'";
+                }
+            }
+
+            $values[] = '(' . implode(',', $row) . ')';
+
+        }
+
+        $values = implode(',', $values);
+
+        $query = "INSERT INTO $table ($columns) SETTINGS async_insert=$asyncInsert, wait_for_async_insert=$waitForAsyncInsert VALUES $values";
+
+        return $this->query($query);
+    }
+
+    /**
      * @param array<string, mixed> $bindings
      */
     public function select(string $query, array $bindings = []) : ResultSet

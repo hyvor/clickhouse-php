@@ -19,12 +19,10 @@ jobs:
           uses: shivammathur/setup-php@v2
           with:
             coverage: "none"
-            php-version: "8.1"
-            ini-file: development
-            tools: composer:v2
+            php-version: "8.3"
 
       -   name: Docker compose up
-          run: docker-compose up -d
+          run: docker compose up -d
 
       -   name: Install dependencies
           run: composer install --no-interaction --no-progress --no-suggest
@@ -44,8 +42,7 @@ jobs:
           uses: shivammathur/setup-php@v2
           with:
             coverage: "none"
-            php-version: "8.1"
-            ini-file: development
+            php-version: "8.3"
 
       -   name: Install dependencies
           run: composer install --no-interaction --no-progress --no-suggest
