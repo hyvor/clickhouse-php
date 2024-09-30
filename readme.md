@@ -108,6 +108,26 @@ $clickhouse->insert(
 )
 ```
 
+### Insert Raw
+
+Clickhouse is notably slow when inserting a large number of rows with parameters. In such cases, you can use the `insertRaw` method, which inserts rows without parameters. Be careful with SQL injection.
+
+```php
+$clickhouse->insertRaw(
+    'users',
+    ['id', 'created_at', 'name', 'age'],
+    [
+        [1, '2021-01-01 00:00:00', 'John', 30],
+        [2, '2021-01-02 00:00:00', 'Jane', 25],
+        [3, '2021-01-03 00:00:00', 'Doe', 35],
+    ],
+    asyncInsert: true,
+    waitForAsyncInsert: true,
+)
+```
+
+This method sets `async_insert` and `wait_for_async_insert` settings true by default. [Read more about these settings](https://clickhouse.com/docs/en/cloud/bestpractices/asynchronous-inserts).
+
 ## Other Queries
 
 You can run any other query with `query()`. The response is returned as JSON in Clickhouse's [JSONCompact format](https://clickhouse.com/docs/en/sql-reference/formats#jsoncompact).
