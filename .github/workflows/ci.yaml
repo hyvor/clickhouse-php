@@ -22,7 +22,7 @@ jobs:
             php-version: "8.3"
 
       -   name: Docker compose up
-          run: docker-compose up -d
+          run: docker compose up -d
 
       -   name: Install dependencies
           run: composer install --no-interaction --no-progress --no-suggest
