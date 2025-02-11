@@ -22,6 +22,20 @@ $clickhouse = new Clickhouse(
 );
 ```
 
+## HTTP Client
+
+Starting from version 2.0, this library is HTTP client agnostic. By default, it uses [php-http Discovery](https://docs.php-http.org/en/latest/discovery.html) to find an HTTP client from the installed packages. You can also pass your own PSR-18 HTTP client.
+
+```php
+$clickhouse = new Clickhouse(
+    httpClient: new MyCustomPsr18HttpClient(),
+    
+    // and also
+    httpRequestFactory: new MyCustomPsr17HttpRequestFactory(),
+    httpStreamFactory: new MyCustomPsr17StreamFactory(),
+);
+```
+
 ## Select
 
 Selecting multiple rows
