@@ -2,7 +2,6 @@
 
 namespace Hyvor\Clickhouse;
 
-use GuzzleHttp\Psr7\MultipartStream;
 use Http\Discovery\Psr17FactoryDiscovery;
 use Http\Discovery\Psr18ClientDiscovery;
 use Http\Message\MultipartStream\MultipartStreamBuilder;
@@ -90,7 +89,7 @@ class Clickhouse
 
     /**
      * @param array<string, string> $columns
-     * @param array<string, mixed> ...$rows
+     * @param array<string, scalar> ...$rows
      * @throws ClickhouseHttpQueryException
      */
     public function insert(string $table, array $columns, array ...$rows) : mixed
@@ -176,14 +175,16 @@ class Clickhouse
     }
 
     /**
-     * @param array<string, mixed> $bindings
+     * @param array<string, scalar> $bindings
      */
     public function select(string $query, array $bindings = []) : ResultSet
     {
         $response = $this->query($query, $bindings);
 
         if (!is_array($response)) {
+            // @codeCoverageIgnoreStart
             throw new ClickhouseHttpQueryException('Invalid query response. Expected array, got ' . gettype($response));
+            // @codeCoverageIgnoreEnd
         }
 
         return new ResultSet($response);
@@ -197,26 +198,23 @@ class Clickhouse
     {
 
         $httpQuery = [
+            // this does not work as POST params
             'session_id' => $this->sessionId,
         ];
 
-        foreach ($bindings as $key => $value) {
-            $httpQuery['param_' . $key] = $value;
-        }
-
         $url = $this->getUrl() . '/?' . http_build_query($httpQuery);
 
-//        $builder = new MultipartStreamBuilder($this->httpStreamFactory);
-//        $builder->addData('query', $query);
-//            $builder->addResource('param_' . $key, (string) $value);
-//        $boundary = $builder->getBoundary();
-//        $multipartStream = $builder->build();
-//        var_dump((string) $multipartStream);
-
+        $builder = new MultipartStreamBuilder($this->httpStreamFactory);
+        $builder->addResource('query', $query);
+        foreach ($bindings as $key => $value) {
+            $builder->addResource('param_' . $key, (string) $value);
+        }
+        $boundary = $builder->getBoundary();
+        $multipartStream = $builder->build();
 
         $request = $this->httpRequestFactory->createRequest('POST', $url)
-            ->withBody($this->httpStreamFactory->createStream($query))
-            ->withHeader('Content-Type', 'application/x-www-form-urlencoded')
+            ->withBody($multipartStream)
+            ->withHeader('Content-Type', 'multipart/form-data; boundary="'.$boundary.'"')
             ->withHeader('X-ClickHouse-Format', 'JSONCompact')
             ->withHeader('X-ClickHouse-User', $this->user)
             ->withHeader('X-ClickHouse-Key', $this->password);

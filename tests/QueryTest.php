@@ -3,6 +3,7 @@
 namespace Hyvor\Clickhouse\Tests;
 
 use Hyvor\Clickhouse\Clickhouse;
+use Hyvor\Clickhouse\Exception\ClickhouseHttpQueryException;
 
 class QueryTest extends TestCase
 {
@@ -28,6 +29,13 @@ class QueryTest extends TestCase
         $this->assertStringContainsString('ENGINE = MergeTree', $schema);
         $this->assertStringContainsString('ORDER BY id', $schema);
 
+    }
+
+    public function testException(): void
+    {
+        $this->expectException(ClickhouseHttpQueryException::class);
+        $clickhouse = new Clickhouse(port: 1011);
+        $this->createUsersTable($clickhouse);
     }
 
 }
