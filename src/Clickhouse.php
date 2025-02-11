@@ -46,13 +46,13 @@ class Clickhouse
          * Set a custom PSR-17 stream factory.
          * If not set, HTTPPlug Discovery will be used to find a factory from composer dependencies.
          */
-        ?StreamFactoryInterface $streamFactory = null
+        ?StreamFactoryInterface $httpStreamFactory = null
     )
     {
 
         $this->httpClient = $httpClient ?? Psr18ClientDiscovery::find();
         $this->httpRequestFactory = $httpRequestFactory ?? Psr17FactoryDiscovery::findRequestFactory();
-        $this->httpStreamFactory = $streamFactory ?? Psr17FactoryDiscovery::findStreamFactory();
+        $this->httpStreamFactory = $httpStreamFactory ?? Psr17FactoryDiscovery::findStreamFactory();
 
         $this->sessionId = bin2hex(random_bytes(16));
     }
