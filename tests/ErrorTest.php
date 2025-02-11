@@ -1,13 +1,23 @@
-<?php
+<?php declare(strict_types=1);
 
+namespace Hyvor\Clickhouse\Tests;
+
+use Hyvor\Clickhouse\Clickhouse;
 use Hyvor\Clickhouse\Exception\ClickhouseHttpQueryException;
 
-it('handles query errors', function() {
+class ErrorTest extends TestCase
+{
 
-    addUsersTable();
+    public function testHandlesQueryErrors(): void
+    {
 
-    $clickhouse = test()->clickhouse;
+        $this->expectException(ClickhouseHttpQueryException::class);
+        $this->expectExceptionMessage("Missing columns: 'something'");
 
-    $clickhouse->query('SELECT something FROM users');
+        $clickhouse = new Clickhouse();
+        $this->createUsersTable($clickhouse);
+        $clickhouse->query('SELECT something FROM users');
 
-})->throws(ClickhouseHttpQueryException::class, "Missing columns: 'something'");
+    }
+
+}

@@ -1,19 +1,35 @@
 <?php
 
-it('updates session vars', function() {
+namespace Hyvor\Clickhouse\Tests;
 
-    $clickhouse = test()->clickhouse;
+use Hyvor\Clickhouse\Clickhouse;
 
-    expect($clickhouse->sessionId())
-        ->toBeString()
-        ->toHaveLength(32);
+class SessionTest extends TestCase
+{
 
-    $response = $clickhouse->query("SELECT value FROM system.settings WHERE name = 'mutations_sync'");
-    expect($response['data'][0][0])->toBe('0');
+    public function testUpdatesSessionVars(): void
+    {
 
-    $clickhouse->query('SET mutations_sync = 1');
+        $clickhouse = new Clickhouse();
 
-    $response = $clickhouse->query("SELECT value FROM system.settings WHERE name = 'mutations_sync'");
-    expect($response['data'][0][0])->toBe('1');
+        $sessionId = $clickhouse->sessionId();
+        $this->assertIsString($sessionId);
+        $this->assertSame(32, strlen($sessionId));
 
-});
+        $response = $clickhouse->query("SELECT value FROM system.settings WHERE name = 'mutations_sync'");
+        $this->assertIsArray($response);
+        $this->assertIsArray($response['data']);
+        $this->assertIsArray($response['data'][0]);
+        $this->assertSame('0', $response['data'][0][0]);
+
+        $clickhouse->query('SET mutations_sync = 1');
+
+        $response = $clickhouse->query("SELECT value FROM system.settings WHERE name = 'mutations_sync'");
+        $this->assertIsArray($response);
+        $this->assertIsArray($response['data']);
+        $this->assertIsArray($response['data'][0]);
+        $this->assertSame('1', $response['data'][0][0]);
+
+    }
+
+}

@@ -1,21 +1,33 @@
 <?php
 
-it('inserts raw - without params', function() {
+namespace Hyvor\Clickhouse\Tests;
 
-    addUsersTable();
-    $clickhouse = test()->clickhouse;
+use Hyvor\Clickhouse\Clickhouse;
 
-    $response = $clickhouse->insertRaw(
-        'users',
-        ['id', 'created_at', 'name', 'age'],
-        [
-            [1, '2021-01-01 00:00:00', 'John', 30],
-            [2, '2021-01-02 00:00:00', 'Jane', 25],
-            [3, '2021-01-03 00:00:00', 'Doe', 35],
-        ]
-    );
+class InsertRawTest extends TestCase
+{
 
-    $response = $clickhouse->query('SELECT * FROM users');
-    expect($response['data'])->toHaveCount(3);
+    public function testInsertsRawWithoutParams(): void
+    {
 
-});
+        $clickhouse = new Clickhouse();
+        $this->createUsersTable($clickhouse);
+
+        $response = $clickhouse->insertRaw(
+            'users',
+            ['id', 'created_at', 'name', 'age'],
+            [
+                [1, '2021-01-01 00:00:00', 'John', 30],
+                [2, '2021-01-02 00:00:00', 'Jane', 25],
+                [3, '2021-01-03 00:00:00', 'Doe', 35],
+            ]
+        );
+
+        $response = $clickhouse->query('SELECT * FROM users');
+        $this->assertIsArray($response);
+        $this->assertIsArray($response['data']);
+        $this->assertCount(3, $response['data']);
+
+    }
+
+}

@@ -2,36 +2,59 @@
 
 namespace Hyvor\Clickhouse;
 
-use GuzzleHttp\Client;
-use GuzzleHttp\Client as HttpClient;
-use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\Psr7\MultipartStream;
-use GuzzleHttp\Psr7\Request;
+use Http\Discovery\Psr17FactoryDiscovery;
+use Http\Discovery\Psr18ClientDiscovery;
+use Http\Message\MultipartStream\MultipartStreamBuilder;
 use Hyvor\Clickhouse\Exception\ClickhouseException;
 use Hyvor\Clickhouse\Exception\ClickhouseHttpQueryException;
 use Hyvor\Clickhouse\Exception\ClickhousePingException;
 use Hyvor\Clickhouse\Result\ResultSet;
+use Psr\Http\Client\ClientExceptionInterface;
 use Psr\Http\Client\ClientInterface;
+use Psr\Http\Message\RequestFactoryInterface;
+use Psr\Http\Message\StreamFactoryInterface;
 
 class Clickhouse
 {
 
-    private ClientInterface $http;
+    private ClientInterface $httpClient;
+    private RequestFactoryInterface $httpRequestFactory;
+    private StreamFactoryInterface $httpStreamFactory;
 
     private string $sessionId;
 
     public function __construct(
-        private string $host = 'localhost',
-        private int $port = 8123,
-        private string $user = 'default',
-        private string $password = '',
-        private ?string $database = 'default',
+        private readonly string $host = 'localhost',
+        private readonly int $port = 8123,
+        private readonly string $user = 'default',
+        private readonly string $password = '',
+        private readonly ?string $database = 'default',
 
-        // dependencies
-        ClientInterface $httpClient = null,
+        /**
+         * Set a custom PSR-18 HTTP client.
+         * If not set, HTTPPlug Discovery will be used to find a client from composer dependencies.
+         */
+        ?ClientInterface $httpClient = null,
+
+        /**
+         * Set a custom PSR-17 request factory.
+         * If not set, HTTPPlug Discovery will be used to find a factory from composer dependencies.
+         */
+        ?RequestFactoryInterface $httpRequestFactory = null,
+
+        /**
+         * Set a custom PSR-17 stream factory.
+         * If not set, HTTPPlug Discovery will be used to find a factory from composer dependencies.
+         */
+        ?StreamFactoryInterface $streamFactory = null
     )
     {
-        $this->http = $httpClient ?? new HttpClient();
+
+        $this->httpClient = $httpClient ?? Psr18ClientDiscovery::find();
+        $this->httpRequestFactory = $httpRequestFactory ?? Psr17FactoryDiscovery::findRequestFactory();
+        $this->httpStreamFactory = $streamFactory ?? Psr17FactoryDiscovery::findStreamFactory();
+
         $this->sessionId = bin2hex(random_bytes(16));
     }
 
@@ -40,8 +63,8 @@ class Clickhouse
 
         try {
 
-            $request = new Request('GET', $this->getUrl('/ping'));
-            $response = $this->http->sendRequest($request);
+            $request = $this->httpRequestFactory->createRequest('GET', $this->getUrl('/ping'));
+            $response = $this->httpClient->sendRequest($request);
 
             if ($response->getStatusCode() !== 200) {
                 return false;
@@ -51,7 +74,7 @@ class Clickhouse
 
             return $body === "Ok.\n";
 
-        } catch (GuzzleException $e) {
+        } catch (ClientExceptionInterface) {
             return false;
         }
 
@@ -167,55 +190,44 @@ class Clickhouse
     }
 
     /**
-     * @param array<string, mixed> $bindings
+     * @param array<string, scalar> $bindings
      * @throws ClickhouseHttpQueryException
      */
     public function query(string $query, array $bindings = []) : mixed
     {
 
-        // session_id doesn't work as a POST param
-        $getQuery = http_build_query([
-            'session_id' => $this->sessionId
-        ]);
+        $httpQuery = [
+            'session_id' => $this->sessionId,
+        ];
 
-        $url = $this->getUrl() . '/?' . $getQuery;
-
-        $paramsMultipart = [];
         foreach ($bindings as $key => $value) {
-            $paramsMultipart[] = [
-                'name' => 'param_' . $key,
-                'contents' => $value
-            ];
+            $httpQuery['param_' . $key] = $value;
+        }
+
+        $url = $this->getUrl() . '/?' . http_build_query($httpQuery);
+
+//        $builder = new MultipartStreamBuilder($this->httpStreamFactory);
+//        $builder->addData('query', $query);
+//            $builder->addResource('param_' . $key, (string) $value);
+//        $boundary = $builder->getBoundary();
+//        $multipartStream = $builder->build();
+//        var_dump((string) $multipartStream);
+
+
+        $request = $this->httpRequestFactory->createRequest('POST', $url)
+            ->withBody($this->httpStreamFactory->createStream($query))
+            ->withHeader('Content-Type', 'application/x-www-form-urlencoded')
+            ->withHeader('X-ClickHouse-Format', 'JSONCompact')
+            ->withHeader('X-ClickHouse-User', $this->user)
+            ->withHeader('X-ClickHouse-Key', $this->password);
+
+        if ($this->database) {
+            $request = $request->withHeader('X-ClickHouse-Database', $this->database);
         }
 
         try {
-
-            $headers = [
-                'X-ClickHouse-Format' => 'JSONCompact',
-                'X-ClickHouse-User' => $this->user,
-                'X-ClickHouse-Key' => $this->password,
-            ];
-
-            if ($this->database) {
-                $headers['X-ClickHouse-Database'] = $this->database;
-            }
-
-            $request = new Request(
-                'POST',
-                $url,
-                $headers,
-                new MultipartStream([
-                    [
-                        'name' => 'query',
-                        'contents' => $query
-                    ],
-                    ...$paramsMultipart
-                ])
-            );
-
-            $response = $this->http->sendRequest($request);
-
-        } catch (GuzzleException $exception) {
+            $response = $this->httpClient->sendRequest($request);
+        } catch (ClientExceptionInterface $exception) {
             throw new ClickhouseHttpQueryException(
                 $exception->getMessage(),
                 $exception->getCode(),
