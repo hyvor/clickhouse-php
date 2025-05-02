@@ -26,6 +26,7 @@ class Clickhouse
     public function __construct(
         private readonly string $host = 'localhost',
         private readonly int $port = 8123,
+        private readonly bool $https = false,
         private readonly string $user = 'default',
         private readonly string $password = '',
         private readonly ?string $database = 'default',
@@ -250,7 +251,8 @@ class Clickhouse
 
     private function getUrl(string $append = '') : string
     {
-        return 'http://' . $this->host . ':' . $this->port . $append;
+        $scheme = $this->https ? 'https' : 'http';
+        return $scheme . '://' . $this->host . ':' . $this->port . $append;
     }
 
 }
