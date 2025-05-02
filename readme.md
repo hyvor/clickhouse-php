@@ -16,6 +16,7 @@ use Hyvor\Clickhouse\Clickhouse;
 $clickhouse = new Clickhouse(
     host: 'localhost',
     port: 8123,
+    https: false,
     user: 'default',
     password: '',
     database: 'default',
