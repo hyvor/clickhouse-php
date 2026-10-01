@@ -4,7 +4,6 @@ namespace Hyvor\Clickhouse;
 
 use Http\Discovery\Psr17FactoryDiscovery;
 use Http\Discovery\Psr18ClientDiscovery;
-use Http\Message\MultipartStream\MultipartStreamBuilder;
 use Hyvor\Clickhouse\Exception\ClickhouseException;
 use Hyvor\Clickhouse\Exception\ClickhouseHttpQueryException;
 use Hyvor\Clickhouse\Exception\ClickhousePingException;
@@ -202,20 +201,15 @@ class Clickhouse
             // this does not work as POST params
             'session_id' => $this->sessionId,
         ];
+        foreach ($bindings as $key => $value) {
+            $httpQuery['param_' . $key] = (string) $value;
+        }
 
         $url = $this->getUrl() . '/?' . http_build_query($httpQuery);
 
-        $builder = new MultipartStreamBuilder($this->httpStreamFactory);
-        $builder->addResource('query', $query);
-        foreach ($bindings as $key => $value) {
-            $builder->addResource('param_' . $key, (string) $value);
-        }
-        $boundary = $builder->getBoundary();
-        $multipartStream = $builder->build();
-
         $request = $this->httpRequestFactory->createRequest('POST', $url)
-            ->withBody($multipartStream)
-            ->withHeader('Content-Type', 'multipart/form-data; boundary="'.$boundary.'"')
+            ->withBody($this->httpStreamFactory->createStream($query))
+            ->withHeader('Content-Type', 'text/plain; charset=UTF-8')
             ->withHeader('X-ClickHouse-Format', 'JSONCompact')
             ->withHeader('X-ClickHouse-User', $this->user)
             ->withHeader('X-ClickHouse-Key', $this->password);
