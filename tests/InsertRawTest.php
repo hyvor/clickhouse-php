@@ -2,7 +2,11 @@
 
 namespace Hyvor\Clickhouse\Tests;
 
+use GuzzleHttp\Psr7\HttpFactory;
 use Hyvor\Clickhouse\Clickhouse;
+use Nyholm\Psr7\Factory\Psr17Factory;
+use PHPUnit\Framework\Attributes\TestWith;
+use Psr\Http\Message\StreamFactoryInterface;
 
 class InsertRawTest extends TestCase
 {
@@ -30,10 +34,15 @@ class InsertRawTest extends TestCase
 
     }
 
-        public function testInsertRawWithLargeQuery(): void
+    /**
+     * @param class-string<StreamFactoryInterface> $streamFactory
+     */
+    #[TestWith([HttpFactory::class], 'guzzle')]
+    #[TestWith([Psr17Factory::class], 'nyholm')]
+    public function testInsertRawWithLargeQuery(string $streamFactory): void
     {
 
-        $clickhouse = new Clickhouse();
+        $clickhouse = new Clickhouse(httpStreamFactory: new $streamFactory());
         $this->createUsersTable($clickhouse);
 
         $rows = [];
