@@ -1,7 +1,7 @@
 version: '3.3'
 services:
   clickhouse:
-    image: clickhouse/clickhouse-server:23.6.2.18
+    image: clickhouse/clickhouse-server:22.12
     restart: always
     ports:
       - '8123:8123'
