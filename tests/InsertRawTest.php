@@ -30,4 +30,26 @@ class InsertRawTest extends TestCase
 
     }
 
+        public function testInsertRawWithLargeQuery(): void
+    {
+
+        $clickhouse = new Clickhouse();
+        $this->createUsersTable($clickhouse);
+
+        $rows = [];
+        for ($i = 1; $i <= 5000; $i++) {
+            $rows[] = [$i, '2021-01-01 00:00:00', 'user_name_' . $i, 30];
+        }
+
+        $clickhouse->insertRaw(
+            'users',
+            ['id', 'created_at', 'name', 'age'],
+            $rows
+        );
+
+        $count = $clickhouse->select('SELECT count() FROM users')->value();
+        $this->assertSame('5000', $count);
+
+    }
+
 }
