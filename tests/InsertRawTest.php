@@ -2,7 +2,11 @@
 
 namespace Hyvor\Clickhouse\Tests;
 
+use GuzzleHttp\Psr7\HttpFactory;
 use Hyvor\Clickhouse\Clickhouse;
+use Nyholm\Psr7\Factory\Psr17Factory;
+use PHPUnit\Framework\Attributes\TestWith;
+use Psr\Http\Message\StreamFactoryInterface;
 
 class InsertRawTest extends TestCase
 {
@@ -27,6 +31,33 @@ class InsertRawTest extends TestCase
         $this->assertIsArray($response);
         $this->assertIsArray($response['data']);
         $this->assertCount(3, $response['data']);
+
+    }
+
+    /**
+     * @param class-string<StreamFactoryInterface> $streamFactory
+     */
+    #[TestWith([HttpFactory::class], 'guzzle')]
+    #[TestWith([Psr17Factory::class], 'nyholm')]
+    public function testInsertRawWithLargeQuery(string $streamFactory): void
+    {
+
+        $clickhouse = new Clickhouse(httpStreamFactory: new $streamFactory());
+        $this->createUsersTable($clickhouse);
+
+        $rows = [];
+        for ($i = 1; $i <= 5000; $i++) {
+            $rows[] = [$i, '2021-01-01 00:00:00', 'user_name_' . $i, 30];
+        }
+
+        $clickhouse->insertRaw(
+            'users',
+            ['id', 'created_at', 'name', 'age'],
+            $rows
+        );
+
+        $count = $clickhouse->select('SELECT count() FROM users')->value();
+        $this->assertSame('5000', $count);
 
     }
 
